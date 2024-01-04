@@ -1,0 +1,16 @@
+[package]
+name = "simple-discord-http-proxy-bot"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serenity = "0.12.0"
+tokio = { version = "1.35.1", features = ["rt", "rt-multi-thread", "macros"] }
+log = "0.4.20"
+tracing-subscriber = { version = "0.3.18", features = [] }
+axum = "0.7.2"
+anyhow = "1.0.77"
+serde = { version = "1.0.193", features = ["derive"] }
+serde_json = "1.0.108"
