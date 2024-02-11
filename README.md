@@ -8,12 +8,23 @@ This is a simple Discord bot that sends HTTP requests to the server and can send
   (Simply send the channel name and it will be fuzzily resolved.)
 
 ```bash
+# Example (Channel)
 curl -X POST --location "http://localhost:8080" \
     -H "accept: application/json" \
     -H "content-type: application/json" \
     -d '{
-            "channel_name": "general",
+            "name": "general",
             "message": "hello world"
+        }'
+        
+# Example (Thread)
+curl -X POST --location "http://localhost:8080" \
+    -H "accept: application/json" \
+    -H "content-type: application/json" \
+    -d '{
+            "type": "thread",
+            "name": "thread-name",,
+            "message": "hello world",
         }'
 ```
 

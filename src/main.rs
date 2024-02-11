@@ -50,7 +50,9 @@ async fn main() {
 
 #[derive(Deserialize)]
 struct Request {
-    channel_name: String,
+    #[serde(rename = "type")]
+    type_: Option<String>,
+    name: String,
     message: String,
 }
 
@@ -66,45 +68,88 @@ async fn index(
 ) -> impl IntoResponse {
     let client = state.client.clone();
     let guild_id = GuildId::new(state.server_id);
-    let channels = client
-        .http
-        .get_channels(guild_id)
-        .await
-        .expect("Failed to get channels");
 
-    let channels = channels
-        .into_iter()
-        .filter(|channel| channel.name == request.channel_name)
-        .filter(|channel| channel.kind == Text)
-        .collect::<Vec<_>>();
+    if request.type_ == Some("thread".to_string()) {
+        let data = client
+            .http
+            .get_guild_active_threads(guild_id)
+            .await
+            .expect("Failed to get threads");
 
-    if channels.len() == 0 {
-        error!("No channel found");
-        return (
-            StatusCode::BAD_REQUEST,
-            Json(SimpleResponse {
-                status_code: StatusCode::BAD_REQUEST.as_u16(),
-                message: "No channel found",
-            }),
-        );
+        let threads = data
+            .threads
+            .into_iter()
+            .filter(|thread| thread.name == request.name)
+            .collect::<Vec<_>>();
+
+        if threads.len() == 0 {
+            error!("No thread found");
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(SimpleResponse {
+                    status_code: StatusCode::BAD_REQUEST.as_u16(),
+                    message: "No thread found",
+                }),
+            );
+        }
+
+        if threads.len() > 1 {
+            error!("Multiple threads found");
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(SimpleResponse {
+                    status_code: StatusCode::BAD_REQUEST.as_u16(),
+                    message: "Multiple threads found",
+                }),
+            );
+        }
+
+        threads[0]
+            .clone()
+            .say(&client.http, request.message)
+            .await
+            .expect("Failed to send message");
+    } else {
+        let channels = client
+            .http
+            .get_channels(guild_id)
+            .await
+            .expect("Failed to get channels");
+
+        let channels = channels
+            .into_iter()
+            .filter(|channel| channel.name == request.name)
+            .filter(|channel| channel.kind == Text)
+            .collect::<Vec<_>>();
+
+        if channels.len() == 0 {
+            error!("No channel found");
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(SimpleResponse {
+                    status_code: StatusCode::BAD_REQUEST.as_u16(),
+                    message: "No channel found",
+                }),
+            );
+        }
+
+        if channels.len() > 1 {
+            error!("Multiple channels found");
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(SimpleResponse {
+                    status_code: StatusCode::BAD_REQUEST.as_u16(),
+                    message: "Multiple channels found",
+                }),
+            );
+        }
+
+        channels[0]
+            .clone()
+            .say(&client.http, request.message)
+            .await
+            .expect("Failed to send message");
     }
-
-    if channels.len() > 1 {
-        error!("Multiple channels found");
-        return (
-            StatusCode::BAD_REQUEST,
-            Json(SimpleResponse {
-                status_code: StatusCode::BAD_REQUEST.as_u16(),
-                message: "Multiple channels found",
-            }),
-        );
-    }
-
-    channels[0]
-        .clone()
-        .say(&client.http, request.message)
-        .await
-        .expect("Failed to send message");
 
     return (
         StatusCode::OK,
