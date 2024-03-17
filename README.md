@@ -26,6 +26,16 @@ curl -X POST --location "http://localhost:8080" \
             "name": "thread-name",,
             "message": "hello world",
         }'
+   
+# Example (Announcement)  
+curl -X POST --location "http://localhost:8080" \
+    -H "accept: application/json" \
+    -H "content-type: application/json" \
+    -d '{
+            "type": "news",
+            "name": "news-name",,
+            "message": "hello world",
+        }'
 ```
 
 ## Build
@@ -42,6 +52,6 @@ cargo build --release
 export DISCORD_TOKEN=...
 export DISCORD_SERVER_ID=...
 export HTTP_SERVER_HOST=... (Optional, default: 0.0.0.0)
-export HTTP_SERVER_HOST=... (Optional, default: 8080)
+export HTTP_SERVER_PORT=... (Optional, default: 8080)
 ./target/release/simple-discord-http-proxy-bot
 ```

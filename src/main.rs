@@ -1,15 +1,15 @@
 use std::env;
 use std::sync::Arc;
 
+use axum::{Json, Router};
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::routing::post;
-use axum::{Json, Router};
 use log::{error, info};
 use serde::{Deserialize, Serialize};
-use serenity::all::ChannelType::Text;
 use serenity::all::{GatewayIntents, GuildId};
+use serenity::all::ChannelType::{News, Text};
 use serenity::Client;
 
 struct AppState {
@@ -119,7 +119,7 @@ async fn index(
         let channels = channels
             .into_iter()
             .filter(|channel| channel.name == request.name)
-            .filter(|channel| channel.kind == Text)
+            .filter(|channel| channel.kind == Text || channel.kind == News)
             .collect::<Vec<_>>();
 
         if channels.len() == 0 {
@@ -144,11 +144,18 @@ async fn index(
             );
         }
 
-        channels[0]
+        let result = channels[0]
             .clone()
             .say(&client.http, request.message)
             .await
             .expect("Failed to send message");
+
+        if request.type_ == Some("news".to_string()) {
+            result
+                .crosspost(&client.http)
+                .await
+                .expect("Failed to crosspost message");
+        }
     }
 
     return (
